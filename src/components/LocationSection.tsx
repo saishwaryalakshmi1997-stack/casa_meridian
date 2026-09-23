@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useDayNight } from "./DayNightContext";
+import SplitTextReveal from "./SplitTextReveal";
 
 interface DistanceItem {
   title: string;
@@ -70,16 +72,15 @@ const distances: DistanceItem[] = [
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M3 21h18" />
-        <path d="M5 21V7l7-4 7 4v14" />
-        <path d="M9 21v-6a3 3 0 0 1 6 0v6" />
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
     ),
   },
   {
-    title: "Chennai International Airport",
+    title: "Chennai Airport (MAA)",
     time: "45 Mins",
-    detail: "Smooth highway connectivity via East Coast Road.",
+    detail: "Direct highway connectivity via ECR and OMR corridors.",
     iconSvg: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -105,6 +106,7 @@ export default function LocationSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const { mode } = useDayNight();
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -155,17 +157,35 @@ export default function LocationSection() {
     <section
       ref={sectionRef}
       id="location"
-      className="relative w-full bg-[#0a1a22] text-[#f6f3ec] py-24 sm:py-32 md:py-36 px-6 sm:px-10 md:px-16 lg:px-24 overflow-hidden border-t border-white/10"
+      className={`relative w-full py-24 sm:py-32 md:py-36 px-6 sm:px-10 md:px-16 lg:px-24 overflow-hidden border-t transition-colors duration-700 ${
+        mode === "day"
+          ? "bg-[#f5f2eb] text-slate-900 border-black/10"
+          : "bg-[#0a1a22] text-[#f6f3ec] border-white/10"
+      }`}
     >
       {/* Background ambient lighting accents */}
-      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-teal-800/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl pointer-events-none" />
+      <div
+        className={`absolute top-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none transition-opacity duration-700 ${
+          mode === "day" ? "bg-teal-500/10" : "bg-teal-800/10"
+        }`}
+      />
+      <div
+        className={`absolute bottom-10 right-10 w-96 h-96 rounded-full blur-3xl pointer-events-none transition-opacity duration-700 ${
+          mode === "day" ? "bg-amber-400/10" : "bg-amber-600/5"
+        }`}
+      />
 
       {/* Main Grid: Left Map | Right Location Details */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
         {/* Left Column: Interactive Styled Map Box */}
         <div ref={mapRef} className="lg:col-span-6 w-full">
-          <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-[#0e212b] shadow-[0_25px_60px_rgba(0,0,0,0.8)] aspect-[4/3] sm:aspect-[16/12] w-full">
+          <div
+            className={`relative rounded-2xl overflow-hidden border aspect-[4/3] sm:aspect-[16/12] w-full transition-all duration-700 ${
+              mode === "day"
+                ? "border-black/10 bg-white shadow-[0_16px_40px_rgba(0,0,0,0.12)]"
+                : "border-white/15 bg-[#0e212b] shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
+            }`}
+          >
             {/* Embedded Google Map Centered on Uthandi, ECR Chennai */}
             <iframe
               src="https://maps.google.com/maps?q=210+Gandhi+Road+VGP+2nd+Part+Uthandi+Chennai+600119&t=&z=15&ie=UTF8&iwloc=&output=embed"
@@ -173,20 +193,23 @@ export default function LocationSection() {
               height="100%"
               style={{
                 border: 0,
-                filter: "invert(92%) hue-rotate(180deg) brightness(90%) contrast(90%)",
+                filter:
+                  mode === "day"
+                    ? "contrast(95%) brightness(98%)"
+                    : "invert(92%) hue-rotate(180deg) brightness(90%) contrast(90%)",
               }}
               allowFullScreen={false}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Casa Meridian Location at 210 Gandhi Road, Uthandi, Chennai"
-              className="w-full h-full"
+              className="w-full h-full transition-all duration-700"
             />
 
             {/* Custom Glowing Location Pin Overlay */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center">
               <div className="relative flex items-center justify-center">
                 <div className="absolute w-12 h-12 rounded-full bg-[#b8935a]/30 animate-ping" />
-                <div className="relative w-8 h-8 rounded-full bg-[#b8935a] border-2 border-white shadow-xl flex items-center justify-center text-[#0a1a22]">
+                <div className="relative w-8 h-8 rounded-full bg-[#b8935a] border-2 border-white shadow-xl flex items-center justify-center text-white">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -198,16 +221,11 @@ export default function LocationSection() {
                   </svg>
                 </div>
               </div>
-              <div className="mt-2 bg-black/85 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-lg">
-                <span className="font-mono text-[10px] tracking-wider text-amber-300 font-semibold uppercase whitespace-nowrap">
-                  Casa Meridian · Uthandi
-                </span>
-              </div>
             </div>
 
             {/* Top Coordinates Badge */}
             <div className="absolute top-4 left-4 z-20">
-              <span className="font-mono text-[10px] sm:text-xs tracking-[0.2em] uppercase text-white/90 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20">
+              <span className="font-mono text-[10px] sm:text-xs tracking-[0.2em] uppercase text-white bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/20">
                 12.8763° N · 80.2163° E
               </span>
             </div>
@@ -218,7 +236,7 @@ export default function LocationSection() {
                 href={MAPS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[10px] sm:text-xs tracking-[0.15em] uppercase text-[#0a1a22] bg-[#b8935a] hover:bg-[#d4af37] px-3.5 py-1.5 rounded-full font-semibold transition-all duration-300 shadow-lg flex items-center gap-1.5"
+                className="font-mono text-[10px] sm:text-xs tracking-[0.15em] uppercase text-white bg-[#b8935a] hover:bg-[#a37f47] px-3.5 py-1.5 rounded-full font-semibold transition-all duration-300 shadow-lg flex items-center gap-1.5"
               >
                 <span>Open in Maps</span>
                 <svg
@@ -245,22 +263,36 @@ export default function LocationSection() {
         <div ref={contentRef} className="lg:col-span-6 flex flex-col space-y-6 sm:space-y-8">
           {/* Eyebrow & Title */}
           <div>
-            <div className="flex items-center gap-2 text-amber-300 font-mono text-xs sm:text-sm tracking-[0.25em] uppercase mb-3">
+            <div className="flex items-center gap-2 text-[#b8935a] font-mono text-xs sm:text-sm tracking-[0.25em] uppercase mb-3">
               <span>☼</span>
-              <span>UTHANDI · ECR, CHENNAI</span>
+              <SplitTextReveal text="UTHANDI · ECR, CHENNAI" delay={0.1} />
             </div>
 
             <h2
-              className="text-3xl sm:text-4xl md:text-5xl font-normal text-[#f6f3ec] tracking-tight leading-tight mb-4"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              className={`text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-tight mb-4 transition-colors duration-700 ${
+                mode === "day" ? "text-slate-900" : "text-[#f6f3ec]"
+              }`}
+              style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
             >
-              Set along the scenic East Coast Road.
+              <SplitTextReveal
+                text="Set along the scenic East Coast Road."
+                stagger={0.06}
+                delay={0.2}
+                duration={0.8}
+              />
             </h2>
 
-            <p className="text-slate-300/85 text-sm sm:text-base leading-relaxed font-light">
-              Perched in the tranquil enclave of Uthandi on the East Coast Road,
-              Casa Meridian offers direct beach access and serene Bay of Bengal
-              views with effortless city connectivity.
+            <p
+              className={`text-sm sm:text-base leading-relaxed font-normal transition-colors duration-700 ${
+                mode === "day" ? "text-slate-800" : "text-slate-300/85"
+              }`}
+            >
+              <SplitTextReveal
+                text="Perched in the tranquil enclave of Uthandi on the East Coast Road, Casa Meridian offers direct beach access and serene Bay of Bengal views with effortless city connectivity."
+                stagger={0.02}
+                delay={0.4}
+                duration={0.65}
+              />
             </p>
           </div>
 
@@ -269,53 +301,36 @@ export default function LocationSection() {
             {distances.map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 sm:p-5 rounded-xl border border-white/10 bg-[#10242e]/60 backdrop-blur-xs hover:border-[#b8935a]/50 transition-colors"
+                className={`p-4 sm:p-5 rounded-xl border backdrop-blur-xs transition-all duration-300 ${
+                  mode === "day"
+                    ? "border-black/10 bg-white/95 hover:border-[#b8935a] shadow-xs"
+                    : "border-white/10 bg-[#10242e]/60 hover:border-[#b8935a]/50"
+                }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-[#d4af37]">{item.iconSvg}</div>
-                  <span className="font-mono text-xs text-amber-300 font-semibold tracking-wider">
-                    {item.time}
+                  <div className="text-[#b8935a]">{item.iconSvg}</div>
+                  <span className="font-mono text-xs text-[#996e2e] dark:text-[#b8935a] font-semibold tracking-wider">
+                    <SplitTextReveal text={item.time} delay={0.3 + idx * 0.06} />
                   </span>
                 </div>
                 <h3
-                  className="text-base sm:text-lg font-normal text-[#f6f3ec] mb-1"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                  className={`text-base sm:text-lg font-normal mb-1 transition-colors duration-700 ${
+                    mode === "day" ? "text-slate-900" : "text-[#f6f3ec]"
+                  }`}
+                  style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
                 >
-                  {item.title}
+                  <SplitTextReveal text={item.title} delay={0.35 + idx * 0.06} />
                 </h3>
-                <p className="text-slate-400 text-xs sm:text-[13px] leading-relaxed font-light">
-                  {item.detail}
+                <p
+                  className={`text-xs sm:text-[13px] leading-relaxed font-normal transition-colors duration-700 ${
+                    mode === "day" ? "text-slate-700" : "text-slate-400"
+                  }`}
+                >
+                  <SplitTextReveal text={item.detail} stagger={0.02} delay={0.4 + idx * 0.06} duration={0.55} />
                 </p>
               </div>
             ))}
           </div>
-
-          {/* Complete Address Card */}
-          {/* <div className="p-6 rounded-2xl border border-[#b8935a]/40 bg-[#132832]/90 backdrop-blur-md shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-            <div className="space-y-1">
-              <span className="font-mono text-[10px] sm:text-xs text-amber-300 uppercase tracking-widest block font-semibold">
-                Villa Address
-              </span>
-              <p className="text-base sm:text-lg text-white font-medium leading-snug">
-                210, Gandhi Road,
-              </p>
-              <p className="text-sm sm:text-base text-slate-300 font-light">
-                VGP 2nd Part, Uthandi,
-              </p>
-              <p className="text-sm sm:text-base text-slate-300 font-light">
-                Chennai – 600 119, Tamil Nadu
-              </p>
-            </div>
-
-            <a
-              href={MAPS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-xs tracking-[0.18em] uppercase text-[#0a1a22] bg-[#b8935a] hover:bg-[#d4af37] px-6 py-3 rounded-full font-semibold transition-all duration-300 shadow-md hover:scale-105 text-center flex-shrink-0"
-            >
-              Get Directions
-            </a>
-          </div> */}
         </div>
       </div>
     </section>

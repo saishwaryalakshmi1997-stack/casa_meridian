@@ -1,18 +1,37 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 import { useDayNight } from "./DayNightContext";
 
-export default function HeroSection() {
+/**
+ * HeroSectionWithClouds
+ * Reference component integrating the atmospheric cloud layer (hero-clouds.png)
+ * positioned between the ocean video and couple layers, featuring:
+ * - Continuous linear horizontal drift (X: -15px -> +15px, 40s loop)
+ * - Scroll progress parallax (Y: 0 -> -10px desktop, -6px mobile)
+ * - Responsive viewport scaling and safe bleed margins
+ */
+export default function HeroSectionWithClouds() {
   const containerRef = useRef<HTMLElement>(null);
   const dayVideoRef = useRef<HTMLVideoElement>(null);
   const nightVideoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
   const { mode } = useDayNight();
   const shouldReduceMotion = useReducedMotion();
+
+  // Detect mobile viewport for tailored subtle motion scaling
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile, { passive: true });
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Scroll parallax mapping based on hero section scroll progress
   const { scrollYProgress } = useScroll({
@@ -24,6 +43,17 @@ export default function HeroSection() {
   const rawBgY = useTransform(scrollYProgress, [0, 1], [0, -20]);
   const rawBgScale = useTransform(scrollYProgress, [0, 1], [1, 1.04]);
 
+  // Cloud subtle scroll parallax: 0 -> -10px Y (desktop), 0 -> -6px Y (mobile)
+  // Weaker than couple's parallax (-45px) and background video parallax (-20px)
+  const cloudsY = useTransform(
+    scrollYProgress,
+    (progress) => (shouldReduceMotion ? 0 : progress * (isMobile ? -6 : -10))
+  );
+
+  // Couple slightly stronger scroll parallax: 0 -> -45px Y, scale 1 -> 1.03
+  const rawCoupleY = useTransform(scrollYProgress, [0, 1], [0, -45]);
+  const rawCoupleScale = useTransform(scrollYProgress, [0, 1], [1, 1.03]);
+
   // Hero text: fades out and floats upward as user scrolls away
   const rawTextY = useTransform(scrollYProgress, [0, 0.45], [0, -50]);
   const rawTextOpacity = useTransform(scrollYProgress, [0, 0.45], [1, 0]);
@@ -31,20 +61,18 @@ export default function HeroSection() {
   // Accessibility: disable scroll parallax if user prefers reduced motion
   const bgY = shouldReduceMotion ? 0 : rawBgY;
   const bgScale = shouldReduceMotion ? 1 : rawBgScale;
+  const coupleY = shouldReduceMotion ? 0 : rawCoupleY;
+  const coupleScale = shouldReduceMotion ? 1 : rawCoupleScale;
   const textY = shouldReduceMotion ? 0 : rawTextY;
   const textOpacity = shouldReduceMotion ? 1 : rawTextOpacity;
 
   // Ensure videos play continuously on mount
   useEffect(() => {
     if (dayVideoRef.current) {
-      dayVideoRef.current.play().catch(() => {
-        // Autoplay policy fallback: muted video is standard
-      });
+      dayVideoRef.current.play().catch(() => {});
     }
     if (nightVideoRef.current) {
-      nightVideoRef.current.play().catch(() => {
-        // Autoplay policy fallback: muted video is standard
-      });
+      nightVideoRef.current.play().catch(() => {});
     }
   }, []);
 
@@ -65,7 +93,7 @@ export default function HeroSection() {
     if (activeVideo) {
       activeVideo.muted = nextMuted;
       if (!nextMuted) {
-        activeVideo.play().catch(() => { });
+        activeVideo.play().catch(() => {});
       }
     }
   };
@@ -91,8 +119,9 @@ export default function HeroSection() {
           muted={isMuted || mode !== "day"}
           loop
           playsInline
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ${mode === "day" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-            }`}
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ${
+            mode === "day" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+          }`}
         />
 
         {/* Night Mode Ocean Video */}
@@ -103,32 +132,116 @@ export default function HeroSection() {
           muted={isMuted || mode !== "night"}
           loop
           playsInline
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ${mode === "night" ? "opacity-100 z-10 brightness-[0.85] contrast-[1.05]" : "opacity-0 z-0 pointer-events-none"
-            }`}
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ${
+            mode === "night" ? "opacity-100 z-10 brightness-[0.85] contrast-[1.05]" : "opacity-0 z-0 pointer-events-none"
+          }`}
         />
 
         {/* Subtle Luxury Gradient Overlays for contrast and seamless section blending */}
         <div
-          className={`absolute inset-x-0 top-0 h-40 sm:h-52 pointer-events-none z-20 transition-opacity duration-700 ${mode === "night"
+          className={`absolute inset-x-0 top-0 h-40 sm:h-52 pointer-events-none z-20 transition-opacity duration-700 ${
+            mode === "night"
               ? "bg-gradient-to-b from-black/85 via-black/40 to-transparent"
               : "bg-gradient-to-b from-black/60 via-black/25 to-transparent"
-            }`}
+          }`}
         />
         <div
-          className={`absolute inset-x-0 bottom-0 h-36 sm:h-48 pointer-events-none z-20 transition-opacity duration-700 ${mode === "night"
+          className={`absolute inset-x-0 bottom-0 h-36 sm:h-48 pointer-events-none z-20 transition-opacity duration-700 ${
+            mode === "night"
               ? "bg-gradient-to-t from-black/90 via-black/40 to-transparent"
               : "bg-gradient-to-t from-black/50 via-black/15 to-transparent"
-            }`}
+          }`}
         />
       </motion.div>
 
       {/* =========================================================================
-          LAYER 2: Hero Text (Luxury Typography & Restrained Entrance)
+          LAYER 2: Cloud Layer (Subtle Sky Parallax & Atmospheric Drift)
+          - Layer order: Ocean video -> Clouds (z-10) -> Couple (z-20) -> Hero text (z-30)
+          - Covers sky area naturally without obscuring couple or hero text
+          - Extremely slow continuous horizontal drift (X: -15px -> +15px, 40s linear loop, reduced on mobile)
+          - Subtle vertical scroll parallax (Y: 0 -> -10px, reduced on mobile)
+          - pointer-events-none & overflow-hidden prevent interference or overflow
+         ========================================================================= */}
+      <motion.div
+        style={{ y: cloudsY }}
+        className="absolute inset-x-0 top-0 h-[48vh] sm:h-[54vh] md:h-[60vh] lg:h-[64vh] pointer-events-none z-10 overflow-hidden select-none"
+        aria-hidden="true"
+      >
+        <motion.div
+          animate={
+            shouldReduceMotion
+              ? undefined
+              : {
+                  x: isMobile ? [-8, 8] : [-15, 15],
+                }
+          }
+          transition={
+            shouldReduceMotion
+              ? undefined
+              : {
+                  duration: 40,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "linear",
+                }
+          }
+          className="relative w-[calc(100%+60px)] -left-[30px] h-full will-change-transform"
+        >
+          <Image
+            src="/casa/hero-clouds.png"
+            alt=""
+            fill
+            priority
+            unoptimized
+            className={`object-cover object-top pointer-events-none transition-all duration-1000 ${
+              mode === "night" ? "opacity-35 brightness-75" : "opacity-85 brightness-100"
+            }`}
+          />
+        </motion.div>
+      </motion.div>
+
+      {/* =========================================================================
+          LAYER 3: Couple PNG (Aligned to Background Terrace)
+          - Centered horizontally to align with terrace perspective vanishing lines
+          - Height scaled so man's head sits just above the terrace railing
+          - Positioned to prevent overlapping the headline on mobile viewports
+         ========================================================================= */}
+      <motion.div
+        style={{ y: coupleY, scale: coupleScale }}
+        className="absolute left-1/2 -translate-x-1/2 bottom-0 sm:bottom-[3%] md:bottom-[6%] lg:bottom-[8%] z-20 pointer-events-none flex flex-col items-center will-change-transform origin-bottom"
+      >
+        {/* Soft natural grounding shadow on terrace floor */}
+        <div className="w-[60%] sm:w-[68%] h-3 sm:h-4 bg-black/40 rounded-full blur-md -mb-2 sm:-mb-3 z-0" />
+
+        <div className="relative h-[32vh] sm:h-[40vh] md:h-[47vh] lg:h-[51vh] max-h-[560px] aspect-[1024/1536] z-10">
+          <Image
+            src="/hero-couple.png"
+            alt="Couple admiring ocean view from Casa Meridian terrace"
+            fill
+            sizes="(max-width: 640px) 240px, (max-width: 1024px) 360px, 450px"
+            priority
+            className="object-contain object-bottom drop-shadow-[0_8px_20px_rgba(0,0,0,0.35)] select-none"
+          />
+        </div>
+      </motion.div>
+
+      {/* =========================================================================
+          LAYER 4: Hero Text (Luxury Typography & Restrained Entrance)
          ========================================================================= */}
       <motion.div
         style={{ y: textY, opacity: textOpacity }}
-        className="relative z-30 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-32 sm:pt-36 md:pt-28 lg:pt-32 flex flex-col items-center text-center will-change-transform"
+        className="relative z-30 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 lg:pt-36 flex flex-col items-center text-center will-change-transform"
       >
+        {/* Subtle Brand Tagline */}
+        <motion.p
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.0, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="font-mono text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.3em] sm:tracking-[0.35em] text-[#d4af37] drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] mb-2.5 sm:mb-3.5 font-medium"
+        >
+          Casa Meridian
+        </motion.p>
+
         {/* Main Headline with Rise-Up From Within Mask Effect */}
         <motion.h1
           initial={shouldReduceMotion ? false : "hidden"}
@@ -142,13 +255,13 @@ export default function HeroSection() {
               },
             },
           }}
-          className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-[62px] tracking-tight text-white font-normal leading-[1.1] drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)] max-w-4xl flex flex-wrap justify-center gap-x-[0.28em] sm:gap-x-[0.3em]"
+          className="font-serif text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl tracking-tight text-white font-normal leading-[1.12] drop-shadow-[0_4px_30px_rgba(0,0,0,0.8)] max-w-4xl flex flex-wrap justify-center gap-x-[0.28em] sm:gap-x-[0.3em]"
           style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
         >
           {["Wake", "up", "to", "the", "waves."].map((word, idx) => (
             <span
               key={idx}
-              className="inline-block overflow-hidden pb-1 sm:pb-1.5 -mb-1 sm:-mb-1.5"
+              className="inline-block overflow-hidden pb-1.5 sm:pb-2.5 -mb-1.5 sm:-mb-2.5"
             >
               <motion.span
                 variants={{
@@ -176,55 +289,13 @@ export default function HeroSection() {
           initial={shouldReduceMotion ? false : { opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-          className="font-serif italic text-xs sm:text-base md:text-lg lg:text-xl text-white/90 font-light tracking-wide drop-shadow-[0_2px_14px_rgba(0,0,0,0.8)] max-w-xl sm:max-w-2xl mt-1.5 sm:mt-2"
+          className="font-serif italic text-sm sm:text-lg md:text-xl lg:text-2xl text-white/90 font-light tracking-wide drop-shadow-[0_2px_14px_rgba(0,0,0,0.8)] max-w-xl sm:max-w-2xl mt-2 sm:mt-3"
           style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
         >
           {mode === "night"
             ? "A serene oceanfront sanctuary beneath the moonlit coast"
             : "A private oceanfront sanctuary on the sun-drenched coast"}
         </motion.p>
-
-        {/* Reserve CTA Button in Hero Section (Positioned high up in clear sky) */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-3.5 sm:mt-4.5"
-        >
-          <Link
-            href="/reserve"
-            className="group relative inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-3.5 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
-          >
-            {/* Organic Cloud SVG Contour & Depth Background */}
-            <svg
-              viewBox="0 0 220 64"
-              className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.55)] transition-all duration-300 group-hover:drop-shadow-[0_10px_32px_rgba(255,255,255,0.3)]"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="heroCloudDepth" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
-                  <stop offset="35%" stopColor="#ffffff" stopOpacity="0.12" />
-                  <stop offset="100%" stopColor="#0a1a22" stopOpacity="0.65" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M 35 52 C 60 54, 90 53, 110 54 C 135 55, 165 54, 185 52 C 198 52, 210 46, 213 36 C 216 26, 210 16, 196 14 C 190 7, 172 4, 155 8 C 142 1, 118 0, 95 3 C 78 1, 55 5, 45 14 C 32 12, 16 20, 14 32 C 12 44, 22 51, 35 52 Z"
-                fill="url(#heroCloudDepth)"
-                stroke="#ffffff"
-                strokeWidth="1.5"
-                vectorEffect="non-scaling-stroke"
-                className="transition-all duration-300 group-hover:stroke-white group-hover:stroke-[2px]"
-              />
-            </svg>
-
-            {/* Reserve Label */}
-            <span className="relative z-10 font-mono text-[11px] sm:text-xs tracking-[0.2em] uppercase font-semibold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] flex items-center gap-2">
-              <span>Reserve</span>
-              <span className="text-sm transition-transform duration-300 group-hover:translate-x-1">→</span>
-            </span>
-          </Link>
-        </motion.div>
       </motion.div>
 
       {/* =========================================================================

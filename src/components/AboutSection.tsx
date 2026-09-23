@@ -4,202 +4,301 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useDayNight } from "./DayNightContext";
 
 export default function AboutSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const imageColRef = useRef<HTMLDivElement>(null);
-  const textColRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
+  const pinContainerRef = useRef<HTMLDivElement>(null);
+  const bgOceanRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const imageInnerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const textContentRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+  const { mode } = useDayNight();
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
 
     const ctx = gsap.context(() => {
-      // Animate left image card on scroll
-      if (imageColRef.current) {
-        gsap.fromTo(
-          imageColRef.current,
-          { opacity: 0, scale: 0.95, y: 40 },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 1.2,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: imageColRef.current,
-              start: "top 80%",
-              toggleActions: "play none none none",
-            },
-          }
+      if (!triggerRef.current || !pinContainerRef.current || !cardRef.current) return;
+
+      const card = cardRef.current;
+      const isMobile = window.innerWidth < 768;
+
+      const startW = isMobile ? "88vw" : "34vw";
+      const startH = isMobile ? "52vh" : "44vh";
+      const startRadius = isMobile ? "20px" : "24px";
+      const startScale = isMobile ? 1.02 : 1.12;
+      const startY = isMobile ? -48 : 0;
+
+      // Initialize starting geometry
+      gsap.set(card, {
+        width: startW,
+        height: startH,
+        borderRadius: startRadius,
+        y: startY,
+      });
+
+      if (bgOceanRef.current) {
+        gsap.set(bgOceanRef.current, { scale: 1.0, opacity: 1 });
+      }
+
+      if (imageInnerRef.current) {
+        gsap.set(imageInnerRef.current, { scale: startScale });
+      }
+
+      // Hide all overlay & text content completely while zooming
+      if (overlayRef.current) {
+        gsap.set(overlayRef.current, { opacity: 0, autoAlpha: 0 });
+      }
+
+      if (textContentRef.current) {
+        gsap.set(textContentRef.current, { opacity: 0, y: 40, autoAlpha: 0 });
+      }
+
+      if (statsRef.current) {
+        gsap.set(statsRef.current, { opacity: 0, y: 25, autoAlpha: 0 });
+      }
+
+      // Master cinematic scrub timeline
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: triggerRef.current,
+          start: "top top",
+          end: "+=2600",
+          pin: pinContainerRef.current,
+          pinSpacing: true,
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // 1. ZOOM PHASE (0 -> 0.48): Villa exterior card expands to fill entire screen
+      tl.to(
+        card,
+        {
+          width: "100vw",
+          height: "100vh",
+          borderRadius: "0px",
+          y: 0,
+          ease: "power2.inOut",
+          duration: 0.48,
+        },
+        0
+      );
+
+      if (imageInnerRef.current) {
+        tl.to(
+          imageInnerRef.current,
+          { scale: 1.0, ease: "power1.out", duration: 0.48 },
+          0
         );
       }
 
-      // Animate right content elements smoothly on scroll
-      if (textColRef.current) {
-        gsap.fromTo(
-          textColRef.current.children,
-          { opacity: 0, y: 35 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.9,
-            stagger: 0.14,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: textColRef.current,
-              start: "top 80%",
-              toggleActions: "play none none none",
-            },
-          }
+      if (bgOceanRef.current) {
+        tl.to(
+          bgOceanRef.current,
+          { scale: 1.08, opacity: 0, ease: "none", duration: 0.48 },
+          0
         );
       }
-    }, sectionRef);
+
+      // 2. REVEAL PHASE (0.48 -> 0.70): ONLY when villa exterior fits the screen, about content appears!
+      if (overlayRef.current) {
+        tl.to(
+          overlayRef.current,
+          { opacity: 1, autoAlpha: 1, ease: "power2.out", duration: 0.20 },
+          0.48
+        );
+      }
+
+      if (textContentRef.current) {
+        tl.to(
+          textContentRef.current,
+          { opacity: 1, y: 0, autoAlpha: 1, ease: "power3.out", duration: 0.22 },
+          0.50
+        );
+      }
+
+      if (statsRef.current) {
+        tl.to(
+          statsRef.current,
+          { opacity: 1, y: 0, autoAlpha: 1, ease: "power3.out", duration: 0.20 },
+          0.58
+        );
+      }
+
+      // 3. HOLD PHASE (0.70 -> 1.0): Holds full screen with content readable for remaining scroll
+      tl.to({}, { duration: 0.35 });
+    }, triggerRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
     <section
-      ref={sectionRef}
+      ref={triggerRef}
       id="about"
-      className="relative w-full bg-[#0b131b] text-[#e2e8f0] py-20 sm:py-28 md:py-36 px-6 sm:px-10 md:px-16 lg:px-24 overflow-hidden border-t border-white/5"
+      className={`relative w-full transition-colors duration-700 select-none ${mode === "day" ? "bg-[#f5f2eb]" : "bg-[#07131b]"
+        }`}
     >
-      {/* Background ambient lighting accents */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-10 w-96 h-96 bg-sky-900/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-        {/* Left Column: Architectural Sunset Exterior Image Showcase */}
+      {/* Pinned full-viewport stage */}
+      <div
+        ref={pinContainerRef}
+        className="relative w-full h-[100svh] min-h-[600px] flex items-center justify-center overflow-hidden"
+      >
+        {/* Background Ocean Horizon (shown before zooming in) */}
         <div
-          ref={imageColRef}
-          className="lg:col-span-6 xl:col-span-6 w-full"
+          ref={bgOceanRef}
+          className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden will-change-transform"
         >
-          <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)] bg-slate-900 aspect-[16/11] sm:aspect-[16/10] md:aspect-[4/3] lg:aspect-[16/12]">
-            <Image
-              src="/casa_exterior.png"
-              alt="Casa Meridian - Villa Exterior at Sunset on the Bay of Bengal"
-              fill
-              priority
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
-            />
-            {/* Subtle Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
-          </div>
+          <Image
+            src="/about_bg_ocean.jpg"
+            alt="Bay of Bengal Ocean Horizon Background"
+            fill
+            priority
+            className="object-cover object-center"
+            sizes="100vw"
+          />
+          {/* Ambient overlay for tone matching & day/night support */}
+          <div
+            className={`absolute inset-0 transition-colors duration-700 ${mode === "day"
+              ? "bg-gradient-to-b from-white/25 via-transparent to-black/15"
+              : "bg-gradient-to-b from-black/70 via-black/50 to-black/80"
+              }`}
+          />
         </div>
 
-        {/* Right Column: Typography & Details */}
+
+
+        {/* The Cinematic Zooming Card */}
         <div
-          ref={textColRef}
-          className="lg:col-span-6 xl:col-span-6 flex flex-col space-y-6 sm:space-y-8"
+          ref={cardRef}
+          style={{ willChange: "width, height, border-radius" }}
+          className={`relative z-10 overflow-hidden shadow-2xl transition-shadow duration-700 flex items-center justify-center rounded-2xl sm:rounded-3xl ${mode === "day"
+            ? "shadow-[0_24px_70px_rgba(0,0,0,0.22)] border border-white/50"
+            : "shadow-[0_30px_90px_rgba(0,0,0,0.95)] border border-white/20"
+            }`}
         >
-          {/* Location Badge */}
-          <div className="flex items-center gap-2 text-amber-300/80 text-xs sm:text-sm font-mono tracking-[0.25em] uppercase">
-            <span>☼</span>
-            <span>ECR, CHENNAI</span>
-          </div>
-
-          {/* Heading */}
-          <h2
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-white tracking-[0.02em] leading-[1.15]"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          {/* Inner Image Container (Day / Night with Parallax Scale) */}
+          <div
+            ref={imageInnerRef}
+            className="absolute inset-0 w-full h-full will-change-transform"
           >
-            A Private Villa on the Bay of Bengal
-          </h2>
-
-          {/* Description Paragraphs */}
-          <div className="space-y-4 text-slate-300/90 text-sm sm:text-base md:text-[17px] leading-relaxed font-light">
-            <p>
-              Casa Meridian was built around a simple idea — that a villa should
-              never compete with its view, only frame it. Four floors, each with
-              its own relationship to the horizon — from garden-level rooms to a
-              rooftop terrace suite.
-            </p>
-            <p>
-              The whole house, just yours. One booking at a time, never shared,
-              never rushed — from sunrise on the terrace to the last light over
-              dinner.
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-slate-800/80 my-2" />
-
-          {/* Stats / Features Row */}
-          <div className="grid grid-cols-3 gap-4 sm:gap-6 pt-2">
-            <div>
-              <div
-                className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#d4af37] font-normal"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                5<span className="text-xl sm:text-2xl ml-0.5">BHK</span>
-              </div>
-              <div className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-slate-400 uppercase mt-1">
-                Whole Villa
-              </div>
-            </div>
-
-            <div>
-              <div
-                className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#d4af37] font-normal"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                4
-              </div>
-              <div className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-slate-400 uppercase mt-1">
-                Floors
-              </div>
-            </div>
-
-            <div>
-              <div
-                className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#d4af37] font-normal"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-              >
-                1
-              </div>
-              <div className="text-[10px] sm:text-xs font-mono tracking-[0.2em] text-slate-400 uppercase mt-1">
-                Infinity Pool
-              </div>
-            </div>
-          </div>
-
-          {/* Contact / Enquire & Reserve */}
-          {/* <div className="pt-4 sm:pt-6 flex items-center gap-4">
-            <a
-              href="mailto:hello@casameridian.com"
-              className="w-12 h-12 rounded-full border border-white/20 hover:border-amber-400/60 transition-colors flex items-center justify-center text-white/80 hover:text-amber-300 flex-shrink-0 group"
-              aria-label="Contact Casa Meridian"
+            {/* Day Exterior Image */}
+            <div
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${mode === "day"
+                ? "opacity-100 z-10 scale-100"
+                : "opacity-0 z-0 scale-105 pointer-events-none"
+                }`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="group-hover:scale-110 transition-transform"
-              >
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-            </a>
-
-            <div>
-              <div className="text-[10px] sm:text-xs font-mono tracking-[0.25em] text-slate-400 uppercase">
-                Enquire & Reserve
-              </div>
-              <a
-                href="mailto:hello@casameridian.com"
-                className="text-base sm:text-lg italic text-white/95 hover:text-amber-300 transition-colors tracking-wide"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-              >
-                hello@casameridian.com
-              </a>
+              <Image
+                src="/casa_exterior.png"
+                alt="Casa Meridian - Villa Exterior in Sunlit Daylight"
+                fill
+                priority
+                className="object-cover object-[8%_center] sm:object-center"
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 50vw, 100vw"
+                quality={90}
+              />
             </div>
-          </div> */}
+
+            {/* Night Exterior Image */}
+            <div
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${mode === "night"
+                ? "opacity-100 z-10 scale-100"
+                : "opacity-0 z-0 scale-105 pointer-events-none"
+                }`}
+            >
+              <Image
+                src="/casa_exterior_night.png"
+                alt="Casa Meridian - Villa Exterior Illuminated at Night"
+                fill
+                priority
+                className="object-cover object-[8%_center] sm:object-center"
+                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 50vw, 100vw"
+                quality={90}
+              />
+            </div>
+          </div>
+
+          {/* Cinematic Dark Gradient Overlay (Adaptive: balanced dark wash on mobile, left-to-right on desktop) */}
+          <div
+            ref={overlayRef}
+            className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black/85 md:bg-gradient-to-r md:from-black/20 md:via-black/60 md:to-black/92 pointer-events-none z-10"
+          />
+
+          {/* About Content: Centered on small devices, right-aligned on desktop */}
+          <div className="absolute inset-0 z-20 flex items-center justify-center md:justify-end px-6 sm:px-12 md:px-16 lg:px-24 py-12 sm:py-16 pointer-events-none">
+            <div className="w-full max-w-xl text-white pointer-events-auto flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6">
+              {/* Text content block */}
+              <div ref={textContentRef} className="flex flex-col items-center md:items-start space-y-3 sm:space-y-4 w-full">
+                {/* Location Badge */}
+                <div className="flex items-center justify-center md:justify-start gap-2 text-[#b8935a] text-[11px] sm:text-sm font-mono tracking-[0.25em] uppercase">
+                  <span>☼</span>
+                  <span>ECR, CHENNAI</span>
+                </div>
+
+                {/* Heading */}
+                <h2
+                  className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.15] text-white text-center md:text-left"
+                  style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
+                >
+                  A Private Villa on the Bay of Bengal
+                </h2>
+
+                {/* Description Paragraphs */}
+                <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm md:text-[16px] leading-relaxed font-light text-white/90 text-center md:text-left max-w-lg">
+                  <p>
+                    Casa Meridian was built around a simple idea — that a villa should never compete with its view, only frame it. Four floors, each with its own relationship to the horizon — from garden-level rooms to a rooftop terrace suite.
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="w-24 md:w-full h-px bg-white/20 my-1 mx-auto md:mx-0" />
+              </div>
+
+              {/* Stats / Features Row */}
+              <div ref={statsRef} className="grid grid-cols-3 gap-4 sm:gap-6 pt-1 w-full max-w-md md:max-w-none text-center md:text-left">
+                <div className="flex flex-col items-center md:items-start">
+                  <div
+                    className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[#b8935a]"
+                    style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
+                  >
+                    5<span className="text-base sm:text-2xl ml-0.5">BHK</span>
+                  </div>
+                  <div className="text-[9px] sm:text-xs font-mono tracking-[0.18em] uppercase mt-0.5 font-medium text-white/70">
+                    Whole Villa
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center md:items-start">
+                  <div
+                    className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[#b8935a]"
+                    style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
+                  >
+                    4
+                  </div>
+                  <div className="text-[9px] sm:text-xs font-mono tracking-[0.18em] uppercase mt-0.5 font-medium text-white/70">
+                    Floors
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center md:items-start">
+                  <div
+                    className="text-2xl sm:text-3xl md:text-4xl font-serif font-normal text-[#b8935a]"
+                    style={{ fontFamily: "var(--font-fraunces), 'Playfair Display', Georgia, serif" }}
+                  >
+                    1
+                  </div>
+                  <div className="text-[9px] sm:text-xs font-mono tracking-[0.18em] uppercase mt-0.5 font-medium text-white/70">
+                    Infinity Pool
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

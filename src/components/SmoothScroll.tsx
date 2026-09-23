@@ -32,7 +32,14 @@ export default function SmoothScroll({
     gsap.ticker.add(updateTicker);
     gsap.ticker.lagSmoothing(0);
 
+    // Refresh and sort all ScrollTriggers in natural document order after layout settles
+    ScrollTrigger.sort();
+    const refreshTimer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 350);
+
     return () => {
+      clearTimeout(refreshTimer);
       gsap.ticker.remove(updateTicker);
       lenis.destroy();
     };

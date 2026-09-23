@@ -1,14 +1,28 @@
 "use client";
 
 import Image from "next/image";
+import { useDayNight } from "./DayNightContext";
+import SplitTextReveal from "./SplitTextReveal";
 
 const MAPS_URL =
   "https://www.google.com/maps/search/210+Gandhi+Road+VGP+2nd+Part+Uthandi+Chennai+600119/@12.8762685,80.2162557,14z/data=!3m1!4b1?entry=ttu&g_ep=EgoyMDI2MDgyNC4wIKXMDSoASAFQAw%3D%3D";
 
 export default function Footer() {
+  const { mode } = useDayNight();
+
   return (
-    <footer className="relative w-full bg-[#08121a] text-[#f6f3ec] pt-20 sm:pt-24 pb-10 sm:pb-12 px-6 sm:px-10 md:px-16 lg:px-24 border-t border-white/10 overflow-hidden">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 pb-16 border-b border-white/10">
+    <footer
+      className={`relative w-full pt-20 sm:pt-24 pb-10 sm:pb-12 px-6 sm:px-10 md:px-16 lg:px-24 border-t overflow-hidden transition-colors duration-700 ${
+        mode === "day"
+          ? "bg-[#e5e0d4] text-slate-800 border-black/10"
+          : "bg-[#08121a] text-[#f6f3ec] border-white/10"
+      }`}
+    >
+      <div
+        className={`max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 pb-16 border-b transition-colors duration-700 ${
+          mode === "day" ? "border-black/10" : "border-white/10"
+        }`}
+      >
         {/* Column 1: Brand & Tagline */}
         <div className="md:col-span-5 flex flex-col space-y-4">
           <div className="flex items-center gap-3.5">
@@ -25,7 +39,11 @@ export default function Footer() {
             </div>
 
             <div>
-              <h3 className="font-sans font-bold text-lg sm:text-xl text-white tracking-[0.14em] uppercase leading-none">
+              <h3
+                className={`font-sans font-bold text-lg sm:text-xl tracking-[0.14em] uppercase leading-none transition-colors duration-700 ${
+                  mode === "day" ? "text-slate-900" : "text-white"
+                }`}
+              >
                 Casa Meridian
               </h3>
               <span className="font-mono text-[10px] sm:text-[11px] tracking-[0.25em] text-[#b8935a] uppercase block mt-1">
@@ -34,25 +52,39 @@ export default function Footer() {
             </div>
           </div>
 
-          <p className="text-slate-300/80 text-sm sm:text-[15px] font-light leading-relaxed max-w-sm pt-2">
-            Barefoot luxury on Chennai&apos;s East Coast Road.
-            <br />
-            Wake up to the sound of waves every morning.
+          <p
+            className={`text-sm sm:text-[15px] font-normal leading-relaxed max-w-sm pt-2 transition-colors duration-700 ${
+              mode === "day" ? "text-slate-800" : "text-slate-300/80"
+            }`}
+          >
+            <SplitTextReveal
+              text="Barefoot luxury on Chennai's East Coast Road. Wake up to the sound of waves every morning."
+              stagger={0.02}
+              delay={0.1}
+            />
           </p>
         </div>
 
         {/* Column 2: Contact */}
         <div className="md:col-span-4 flex flex-col space-y-3.5">
-          <h4 className="font-mono text-xs sm:text-sm tracking-[0.2em] uppercase text-white font-semibold mb-1">
+          <h4
+            className={`font-mono text-xs sm:text-sm tracking-[0.2em] uppercase font-semibold mb-1 transition-colors duration-700 ${
+              mode === "day" ? "text-slate-900" : "text-white"
+            }`}
+          >
             Contact
           </h4>
 
           {/* Phone */}
           <a
             href="tel:+919500003388"
-            className="flex items-center gap-3 text-slate-300/85 hover:text-amber-300 text-sm sm:text-[15px] font-light transition-colors group"
+            className={`flex items-center gap-3 text-sm sm:text-[15px] font-normal transition-colors group ${
+              mode === "day"
+                ? "text-slate-800 hover:text-[#996e2e]"
+                : "text-slate-300/85 hover:text-amber-300"
+            }`}
           >
-            <div className="text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="text-[#b8935a] group-hover:scale-110 transition-transform">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -73,9 +105,13 @@ export default function Footer() {
           {/* Email */}
           <a
             href="mailto:casameridianecr@gmail.com"
-            className="flex items-center gap-3 text-slate-300/85 hover:text-amber-300 text-sm sm:text-[15px] font-light transition-colors group"
+            className={`flex items-center gap-3 text-sm sm:text-[15px] font-normal transition-colors group ${
+              mode === "day"
+                ? "text-slate-800 hover:text-[#996e2e]"
+                : "text-slate-300/85 hover:text-amber-300"
+            }`}
           >
-            <div className="text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="text-[#b8935a] group-hover:scale-110 transition-transform">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -99,9 +135,13 @@ export default function Footer() {
             href="https://instagram.com/casa_meridian_ecr"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 text-slate-300/85 hover:text-amber-300 text-sm sm:text-[15px] font-light transition-colors group"
+            className={`flex items-center gap-3 text-sm sm:text-[15px] font-normal transition-colors group ${
+              mode === "day"
+                ? "text-slate-800 hover:text-[#996e2e]"
+                : "text-slate-300/85 hover:text-amber-300"
+            }`}
           >
-            <div className="text-amber-400 group-hover:scale-110 transition-transform">
+            <div className="text-[#b8935a] group-hover:scale-110 transition-transform">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -124,12 +164,20 @@ export default function Footer() {
 
         {/* Column 3: Location */}
         <div className="md:col-span-3 flex flex-col space-y-2.5">
-          <h4 className="font-mono text-xs sm:text-sm tracking-[0.2em] uppercase text-white font-semibold mb-1">
+          <h4
+            className={`font-mono text-xs sm:text-sm tracking-[0.2em] uppercase font-semibold mb-1 transition-colors duration-700 ${
+              mode === "day" ? "text-slate-900" : "text-white"
+            }`}
+          >
             Location
           </h4>
 
-          <div className="flex items-start gap-3 text-slate-300/85 text-sm sm:text-[15px] font-light">
-            <div className="text-amber-400 mt-1 flex-shrink-0">
+          <div
+            className={`flex items-start gap-3 text-sm sm:text-[15px] font-normal transition-colors duration-700 ${
+              mode === "day" ? "text-slate-800" : "text-slate-300/85"
+            }`}
+          >
+            <div className="text-[#b8935a] mt-1 flex-shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"
@@ -156,7 +204,7 @@ export default function Footer() {
             href={MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-mono tracking-wider text-amber-300 hover:text-amber-200 transition-colors pt-2 inline-flex items-center gap-1.5 group"
+            className="text-xs font-mono tracking-wider text-[#996e2e] dark:text-[#b8935a] hover:text-amber-600 transition-colors pt-2 inline-flex items-center gap-1.5 group font-medium"
           >
             <span>Get directions</span>
             <span className="group-hover:translate-x-1 transition-transform">→</span>
@@ -165,12 +213,21 @@ export default function Footer() {
       </div>
 
       {/* Bottom Sub-Footer Row */}
-      <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-light text-slate-400">
+      <div
+        className={`max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium transition-colors duration-700 ${
+          mode === "day" ? "text-slate-700" : "text-slate-400"
+        }`}
+      >
         <p>© 2026 Casa Meridian. All rights reserved.</p>
-        <p className="font-serif italic text-sm text-slate-300/90">
-          Wake Up to the Waves.
+        <p
+          className={`font-serif italic text-sm transition-colors duration-700 ${
+            mode === "day" ? "text-slate-900" : "text-slate-300/90"
+          }`}
+        >
+          <SplitTextReveal text="Wake Up to the Waves." delay={0.1} />
         </p>
       </div>
     </footer>
   );
 }
+
